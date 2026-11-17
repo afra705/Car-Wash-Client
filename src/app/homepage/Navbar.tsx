@@ -114,7 +114,7 @@ export default function Navbar() {
 
                   {/* Dashboard */}
                   <Link
-                    href="/dashboard"
+                    href={`/dashboard/${session?.user?.role || 'user'}`}
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   >

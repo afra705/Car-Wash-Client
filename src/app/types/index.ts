@@ -2,7 +2,8 @@ import type { LucideIcon } from "lucide-react";
 
 export type TUserRole = "admin" | "user" | "branchManager";
 
-export interface DashboardMenuItem {
+export interface TDashboardMenuItem {
+  href: string;
   title: string;
   url: string;
   icon: LucideIcon;
