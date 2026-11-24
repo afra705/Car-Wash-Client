@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from "lucide-react";
 
 export type TUserRole = "admin" | "user" | "branchManager";
@@ -14,4 +15,30 @@ export interface TUser {
   name: string;
   email: string;
   role: TUserRole;
+  branch?: string;
+}
+
+export type TServiceStatus = "active" | "pending" | "inactive";
+
+export interface TService {
+  _id: string;
+  serviceName: string;
+  category: string;
+  branch: string;
+  description?: string;
+  price: number;
+  location?: string;
+  status: TServiceStatus | string;
+  createdAt?: string;
+}
+
+export interface TServiceInput {
+  serviceName: string;
+  category: string;
+  branch: string;
+  description: string;
+  price: number;
+  location: string;
+  status: TServiceStatus;
+  createdAt: string;
 }
