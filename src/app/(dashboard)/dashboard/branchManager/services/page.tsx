@@ -39,6 +39,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { useSession } from "@/lib/auth-client";
+
 
 type TServiceForm = {
   serviceName: string;
@@ -46,30 +48,24 @@ type TServiceForm = {
   branch: string;
   location: string;
   price: string;
+  
   description: string;
+    image: string;
   status: TServiceStatus;
 };
 
 const EMPTY_FORM: TServiceForm = {
   serviceName: "",
   category: "",
-  branch: "",
+  branch: "Dhaka",
   location: "",
   price: "",
+    image: '',
   description: "",
   status: "active",
-};
+};;
 
-const BRANCHES = [
-  "Dhaka",
-  "Khulna",
-  "Chattogram",
-  "Sylhet",
-  "Rajshahi",
-  "Barishal",
-  "Rangpur",
-  "Mymensingh",
-];
+
 
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-green-100 text-green-700",
@@ -112,6 +108,9 @@ const formatDate = (value?: string) => {
 };
 
 const AddServices = () => {
+  const {data: session} = useSession() 
+  const user = session?.user
+
   const [services, setServices] = useState<TService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,7 +128,10 @@ const AddServices = () => {
 
     try {
       const data = await getServices();
+
+      const myServices = data.filter((service)=> service.branch === user?.branch)
       setServices(data);
+      
     } catch {
       setError(LOAD_ERROR_MESSAGE);
     } finally {
@@ -173,6 +175,9 @@ const AddServices = () => {
   };
 
   const handleDialogChange = (open: boolean) => {
+
+    
+
     setIsDialogOpen(open);
 
     if (!open) {
@@ -188,6 +193,7 @@ const AddServices = () => {
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+       console.log(user, 'user');
     event.preventDefault();
 
     const price = Number(form.price);
@@ -210,16 +216,18 @@ const AddServices = () => {
     setSaving(true);
 
     try {
-      await createService({
-        serviceName: form.serviceName.trim(),
-        category: form.category.trim(),
-        branch: form.branch,
-        location: form.location.trim(),
-        price,
-        description: form.description.trim(),
-        status: form.status,
-        createdAt: new Date().toISOString(),
-      });
+     await createService({
+      serviceName: form.serviceName.trim(),
+      category: form.category.trim(),
+      branch: form.branch,
+      location: form.location.trim(),
+      image: form.image.trim(),
+      price,
+      description: form.description.trim(),
+      status: form.status,
+      createdAt: new Date().toISOString(),
+      createdBy: user?.email ?? "",
+    });
 
       toast.success("Service added successfully.");
       setIsDialogOpen(false);
@@ -371,93 +379,118 @@ const AddServices = () => {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 hover:bg-gray-50">
-                  <TableHead className="px-4 font-semibold">
-                    Service
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    Category
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    Branch
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    Price
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    Location
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    Status
-                  </TableHead>
-                  <TableHead className="font-semibold">
-                    Created
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
+          <Table>
+  <TableHeader>
+    <TableRow className="bg-gray-50 hover:bg-gray-50">
+      <TableHead className="px-4 font-semibold">
+        Image
+      </TableHead>
+      <TableHead className="font-semibold">
+        Service
+      </TableHead>
+      <TableHead className="font-semibold">
+        Category
+      </TableHead>
+      <TableHead className="font-semibold">
+        Branch
+      </TableHead>
+      <TableHead className="font-semibold">
+        Price
+      </TableHead>
+      <TableHead className="font-semibold">
+        Location
+      </TableHead>
+      <TableHead className="font-semibold">
+        Status
+      </TableHead>
+      <TableHead className="font-semibold">
+        Created
+      </TableHead>
+    </TableRow>
+  </TableHeader>
 
-              <TableBody>
-                {services.map((service, index) => {
-                  const status = String(service.status ?? "pending");
+  <TableBody>
+    {services.map((service, index) => {
+      const status = String(service.status ?? "pending");
 
-                  const statusClass =
-                    STATUS_STYLES[status.toLowerCase()] ??
-                    "bg-blue-100 text-blue-700";
+      const statusClass =
+        STATUS_STYLES[status.toLowerCase()] ??
+        "bg-blue-100 text-blue-700";
 
-                  return (
-                    <TableRow
-                      key={service._id ?? index}
-                      className="hover:bg-gray-50/70"
-                    >
-                      <TableCell className="max-w-[280px] px-4 whitespace-normal">
-                        <p className="font-medium text-[#122048]">
-                          {service.serviceName || "Untitled service"}
-                        </p>
+      return (
+        <TableRow
+          key={service._id ?? index}
+          className="hover:bg-gray-50/70"
+        >
+          {/* Image */}
+          <TableCell className="px-4">
+            {service.image ? (
+              <img
+                src={service.image}
+                alt={service.serviceName || "Service"}
+                className="h-12 w-16 rounded-lg border border-gray-200 object-cover"
+              />
+            ) : (
+              <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                No Image
+              </div>
+            )}
+          </TableCell>
 
-                        {service.description && (
-                          <p
-                            className="mt-0.5 truncate text-xs text-gray-500"
-                            title={service.description}
-                          >
-                            {service.description}
-                          </p>
-                        )}
-                      </TableCell>
+          {/* Service */}
+          <TableCell className="max-w-[220px] whitespace-normal">
+            <p className="font-medium text-[#122048]">
+              {service.serviceName || "Untitled service"}
+            </p>
 
-                      <TableCell className="text-gray-600">
-                        {service.category || "—"}
-                      </TableCell>
+            {service.description && (
+              <p
+                className="mt-0.5 truncate text-xs text-gray-500"
+                title={service.description}
+              >
+                {service.description}
+              </p>
+            )}
+          </TableCell>
 
-                      <TableCell className="text-gray-600">
-                        {service.branch || "—"}
-                      </TableCell>
+          {/* Category */}
+          <TableCell className="text-gray-600">
+            {service.category || "—"}
+          </TableCell>
 
-                      <TableCell className="font-medium text-gray-700">
-                        {formatPrice(service.price)}
-                      </TableCell>
+          {/* Branch */}
+          <TableCell className="text-gray-600">
+            {service.branch || "—"}
+          </TableCell>
 
-                      <TableCell className="text-gray-600">
-                        {service.location || "—"}
-                      </TableCell>
+          {/* Price */}
+          <TableCell className="font-medium text-gray-700">
+            {formatPrice(service.price)}
+          </TableCell>
 
-                      <TableCell>
-                        <Badge
-                          className={`${statusClass} border-transparent capitalize`}
-                        >
-                          {status}
-                        </Badge>
-                      </TableCell>
+          {/* Location */}
+          <TableCell className="text-gray-600">
+            {service.location || "—"}
+          </TableCell>
 
-                      <TableCell className="text-gray-500">
-                        {formatDate(service.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          {/* Status */}
+          <TableCell>
+            <Badge
+              className={`${statusClass} border-transparent capitalize`}
+            >
+              {status}
+            </Badge>
+          </TableCell>
+
+          {/* Created */}
+          <TableCell className="text-gray-500">
+            {formatDate(service.createdAt)}
+          </TableCell>
+        </TableRow>
+      );
+    })}
+  </TableBody>
+</Table>
           )}
         </CardContent>
       </Card>
@@ -510,31 +543,19 @@ const AddServices = () => {
               </div>
 
               {/* Branch */}
-              <div className="grid gap-2">
-                <Label htmlFor="service-branch">
-                  Branch <span className="text-red-500">*</span>
-                </Label>
+          {/* Default Branch */}
+<div className="grid gap-2">
+  <Label htmlFor="service-branch">
+    Branch
+  </Label>
 
-                <NativeSelect
-                  id="service-branch"
-                  value={form.branch}
-                  onChange={(event) =>
-                    updateForm("branch", event.target.value)
-                  }
-                  className="w-full"
-                  required
-                >
-                  <NativeSelectOption value="" disabled>
-                    Select a branch
-                  </NativeSelectOption>
-
-                  {BRANCHES.map((branch) => (
-                    <NativeSelectOption key={branch} value={branch}>
-                      {branch}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </div>
+ <Input
+  id="service-branch"
+  value={form.branch}
+  disabled
+  className="bg-gray-50 text-gray-600"
+/>
+</div>
 
               <div className="grid gap-2">
                 <Label htmlFor="service-price">
@@ -569,7 +590,34 @@ const AddServices = () => {
                   placeholder="e.g. Gulshan Branch"
                 />
               </div>
+<div className="grid gap-2 sm:col-span-2">
+  <Label htmlFor="service-image">
+    Service Image URL
+  </Label>
 
+  <Input
+    id="service-image"
+    type="url"
+    value={form.image}
+    onChange={(event) =>
+      updateForm("image", event.target.value)
+    }
+    placeholder="https://example.com/service-image.jpg"
+  />
+
+  {form.image && (
+    <div className="mt-2">
+      <img
+        src={form.image}
+        alt="Service preview"
+        className="h-32 w-full rounded-lg border object-cover"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+        }}
+      />
+    </div>
+  )}
+</div>
               <div className="grid gap-2">
                 <Label htmlFor="service-status">
                   Status

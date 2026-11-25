@@ -17,13 +17,18 @@ export async function getServices(): Promise<TService[]> {
   return Array.isArray(data) ? data : [];
 }
 
+
 export async function createService(payload: TServiceInput): Promise<void> {
+  
   const res = await fetch(`${API_BASE_URL}/services`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      createdBy: sessionStorage.getItem("userEmail"),
+    }),
   });
 
   if (!res.ok) {

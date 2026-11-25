@@ -21,6 +21,7 @@ export interface TUser {
 export type TServiceStatus = "active" | "pending" | "inactive";
 
 export interface TService {
+  image: string;
   _id: string;
   serviceName: string;
   category: string;
@@ -41,4 +42,6 @@ export interface TServiceInput {
   location: string;
   status: TServiceStatus;
   createdAt: string;
+    createdBy?: string;
+    image?: string;
 }
