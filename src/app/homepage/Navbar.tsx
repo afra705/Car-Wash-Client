@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   LogOut,
   CircleUserRound,
+  type LucideIcon,
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
@@ -27,8 +28,8 @@ export default function Navbar() {
 
   const { data: session, isPending } = authClient.useSession();
 
-  const navItems = [
-    { name: "Services", icon: LayoutGrid },
+  const navItems: { name: string; icon: LucideIcon; href?: string }[] = [
+    { name: "Services", icon: LayoutGrid, href: "/services" },
     { name: "Compare", icon: CarFront },
     { name: "About Us", icon: Info },
   ];
@@ -176,7 +177,13 @@ export default function Navbar() {
             return (
               <li key={item.name}>
                 <button
-                  onClick={() => setActiveTab(item.name)}
+                  onClick={() => {
+                    setActiveTab(item.name);
+
+                    if (item.href) {
+                      router.push(item.href);
+                    }
+                  }}
                   className={`flex items-center gap-2 text-sm font-medium pb-2 transition-colors ${
                     isActive
                       ? "text-[#FACC15] border-b-2 border-[#FACC15]"

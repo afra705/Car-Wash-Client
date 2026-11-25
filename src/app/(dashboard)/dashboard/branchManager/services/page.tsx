@@ -1,4 +1,6 @@
 
+/* eslint-disable react-hooks/preserve-manual-memoization */
+
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -41,16 +43,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/auth-client";
 
-
 type TServiceForm = {
   serviceName: string;
   category: string;
   branch: string;
   location: string;
   price: string;
-  
   description: string;
-    image: string;
+  image: string;
   status: TServiceStatus;
 };
 
@@ -60,12 +60,10 @@ const EMPTY_FORM: TServiceForm = {
   branch: "Dhaka",
   location: "",
   price: "",
-    image: '',
+  image: "",
   description: "",
   status: "active",
-};;
-
-
+};
 
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-green-100 text-green-700",
@@ -108,8 +106,8 @@ const formatDate = (value?: string) => {
 };
 
 const AddServices = () => {
-  const {data: session} = useSession() 
-  const user = session?.user
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const [services, setServices] = useState<TService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,34 +117,35 @@ const AddServices = () => {
   const [form, setForm] = useState<TServiceForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  const loadServices = useCallback(async (showLoader = true) => {
-    if (showLoader) {
-      setLoading(true);
-    }
+  // Load services
+  const loadServices = useCallback(
+    async (showLoader = true) => {
+      if (!user?.email) return;
 
-    setError(null);
+      if (showLoader) setLoading(true);
+      setError(null);
 
-    try {
-      const data = await getServices();
-
-      const myServices = data.filter((service)=> service.branch === user?.branch)
-      setServices(data);
-      
-    } catch {
-      setError(LOAD_ERROR_MESSAGE);
-    } finally {
-      if (showLoader) {
-        setLoading(false);
+      try {
+        const data = await getServices(user.email);
+        setServices(data);
+      } catch {
+        setError(LOAD_ERROR_MESSAGE);
+      } finally {
+        if (showLoader) setLoading(false);
       }
-    }
-  }, []);
+    },
+    [user?.email]
+  );
 
+  // Initial services load
   useEffect(() => {
+    if (!user?.email) return;
+
     let cancelled = false;
 
     const loadInitialServices = async () => {
       try {
-        const data = await getServices();
+        const data = await getServices(user.email);
 
         if (!cancelled) {
           setServices(data);
@@ -167,17 +166,16 @@ const AddServices = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.email]);
 
+  // Open dialog
   const handleOpenDialog = () => {
     setForm(EMPTY_FORM);
     setIsDialogOpen(true);
   };
 
+  // Close dialog
   const handleDialogChange = (open: boolean) => {
-
-    
-
     setIsDialogOpen(open);
 
     if (!open) {
@@ -185,15 +183,21 @@ const AddServices = () => {
     }
   };
 
+  // Update form
   const updateForm = <K extends keyof TServiceForm>(
     field: K,
     value: TServiceForm[K]
   ) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-       console.log(user, 'user');
+  // Submit service
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     const price = Number(form.price);
@@ -216,22 +220,24 @@ const AddServices = () => {
     setSaving(true);
 
     try {
-     await createService({
-      serviceName: form.serviceName.trim(),
-      category: form.category.trim(),
-      branch: form.branch,
-      location: form.location.trim(),
-      image: form.image.trim(),
-      price,
-      description: form.description.trim(),
-      status: form.status,
-      createdAt: new Date().toISOString(),
-      createdBy: user?.email ?? "",
-    });
+      await createService({
+        serviceName: form.serviceName.trim(),
+        category: form.category.trim(),
+        branch: form.branch,
+        location: form.location.trim(),
+        image: form.image.trim(),
+        price,
+        description: form.description.trim(),
+        status: form.status,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.email ?? "",
+      });
 
       toast.success("Service added successfully.");
+
       setIsDialogOpen(false);
       setForm(EMPTY_FORM);
+
       await loadServices(false);
     } catch {
       toast.error("Failed to add service. Please try again.");
@@ -248,6 +254,7 @@ const AddServices = () => {
           <h1 className="text-2xl font-bold text-[#122048]">
             Services
           </h1>
+
           <p className="mt-1 text-sm text-gray-500">
             Manage the car wash services offered to your customers.
           </p>
@@ -379,118 +386,118 @@ const AddServices = () => {
               </Button>
             </div>
           ) : (
-          <Table>
-  <TableHeader>
-    <TableRow className="bg-gray-50 hover:bg-gray-50">
-      <TableHead className="px-4 font-semibold">
-        Image
-      </TableHead>
-      <TableHead className="font-semibold">
-        Service
-      </TableHead>
-      <TableHead className="font-semibold">
-        Category
-      </TableHead>
-      <TableHead className="font-semibold">
-        Branch
-      </TableHead>
-      <TableHead className="font-semibold">
-        Price
-      </TableHead>
-      <TableHead className="font-semibold">
-        Location
-      </TableHead>
-      <TableHead className="font-semibold">
-        Status
-      </TableHead>
-      <TableHead className="font-semibold">
-        Created
-      </TableHead>
-    </TableRow>
-  </TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50 hover:bg-gray-50">
+                  <TableHead className="px-4 font-semibold">
+                    Image
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Service
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Category
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Branch
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Price
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Location
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Status
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Created
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-  <TableBody>
-    {services.map((service, index) => {
-      const status = String(service.status ?? "pending");
+              <TableBody>
+                {services.map((service, index) => {
+                  const status = String(service.status ?? "pending");
 
-      const statusClass =
-        STATUS_STYLES[status.toLowerCase()] ??
-        "bg-blue-100 text-blue-700";
+                  const statusClass =
+                    STATUS_STYLES[status.toLowerCase()] ??
+                    "bg-blue-100 text-blue-700";
 
-      return (
-        <TableRow
-          key={service._id ?? index}
-          className="hover:bg-gray-50/70"
-        >
-          {/* Image */}
-          <TableCell className="px-4">
-            {service.image ? (
-              <img
-                src={service.image}
-                alt={service.serviceName || "Service"}
-                className="h-12 w-16 rounded-lg border border-gray-200 object-cover"
-              />
-            ) : (
-              <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                No Image
-              </div>
-            )}
-          </TableCell>
+                  return (
+                    <TableRow
+                      key={service._id ?? index}
+                      className="hover:bg-gray-50/70"
+                    >
+                      {/* Image */}
+                      <TableCell className="px-4">
+                        {service.image ? (
+                          <img
+                            src={service.image}
+                            alt={service.serviceName || "Service"}
+                            className="h-12 w-16 rounded-lg border border-gray-200 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-16 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                            No Image
+                          </div>
+                        )}
+                      </TableCell>
 
-          {/* Service */}
-          <TableCell className="max-w-[220px] whitespace-normal">
-            <p className="font-medium text-[#122048]">
-              {service.serviceName || "Untitled service"}
-            </p>
+                      {/* Service */}
+                      <TableCell className="max-w-[220px] whitespace-normal">
+                        <p className="font-medium text-[#122048]">
+                          {service.serviceName || "Untitled service"}
+                        </p>
 
-            {service.description && (
-              <p
-                className="mt-0.5 truncate text-xs text-gray-500"
-                title={service.description}
-              >
-                {service.description}
-              </p>
-            )}
-          </TableCell>
+                        {service.description && (
+                          <p
+                            className="mt-0.5 truncate text-xs text-gray-500"
+                            title={service.description}
+                          >
+                            {service.description}
+                          </p>
+                        )}
+                      </TableCell>
 
-          {/* Category */}
-          <TableCell className="text-gray-600">
-            {service.category || "—"}
-          </TableCell>
+                      {/* Category */}
+                      <TableCell className="text-gray-600">
+                        {service.category || "—"}
+                      </TableCell>
 
-          {/* Branch */}
-          <TableCell className="text-gray-600">
-            {service.branch || "—"}
-          </TableCell>
+                      {/* Branch */}
+                      <TableCell className="text-gray-600">
+                        {service.branch || "—"}
+                      </TableCell>
 
-          {/* Price */}
-          <TableCell className="font-medium text-gray-700">
-            {formatPrice(service.price)}
-          </TableCell>
+                      {/* Price */}
+                      <TableCell className="font-medium text-gray-700">
+                        {formatPrice(service.price)}
+                      </TableCell>
 
-          {/* Location */}
-          <TableCell className="text-gray-600">
-            {service.location || "—"}
-          </TableCell>
+                      {/* Location */}
+                      <TableCell className="text-gray-600">
+                        {service.location || "—"}
+                      </TableCell>
 
-          {/* Status */}
-          <TableCell>
-            <Badge
-              className={`${statusClass} border-transparent capitalize`}
-            >
-              {status}
-            </Badge>
-          </TableCell>
+                      {/* Status */}
+                      <TableCell>
+                        <Badge
+                          className={`${statusClass} border-transparent capitalize`}
+                        >
+                          {status}
+                        </Badge>
+                      </TableCell>
 
-          {/* Created */}
-          <TableCell className="text-gray-500">
-            {formatDate(service.createdAt)}
-          </TableCell>
-        </TableRow>
-      );
-    })}
-  </TableBody>
-</Table>
+                      {/* Created */}
+                      <TableCell className="text-gray-500">
+                        {formatDate(service.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -510,6 +517,7 @@ const AddServices = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 sm:grid-cols-2">
+              {/* Service name */}
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="service-name">
                   Service name <span className="text-red-500">*</span>
@@ -526,6 +534,7 @@ const AddServices = () => {
                 />
               </div>
 
+              {/* Category */}
               <div className="grid gap-2">
                 <Label htmlFor="service-category">
                   Category <span className="text-red-500">*</span>
@@ -542,21 +551,21 @@ const AddServices = () => {
                 />
               </div>
 
-              {/* Branch */}
-          {/* Default Branch */}
-<div className="grid gap-2">
-  <Label htmlFor="service-branch">
-    Branch
-  </Label>
+              {/* Branch - Default Dhaka */}
+              <div className="grid gap-2">
+                <Label htmlFor="service-branch">
+                  Branch
+                </Label>
 
- <Input
-  id="service-branch"
-  value={form.branch}
-  disabled
-  className="bg-gray-50 text-gray-600"
-/>
-</div>
+                <Input
+                  id="service-branch"
+                  value={form.branch}
+                  disabled
+                  className="bg-gray-50 text-gray-600"
+                />
+              </div>
 
+              {/* Price */}
               <div className="grid gap-2">
                 <Label htmlFor="service-price">
                   Price <span className="text-red-500">*</span>
@@ -576,6 +585,7 @@ const AddServices = () => {
                 />
               </div>
 
+              {/* Location */}
               <div className="grid gap-2">
                 <Label htmlFor="service-location">
                   Location
@@ -590,34 +600,38 @@ const AddServices = () => {
                   placeholder="e.g. Gulshan Branch"
                 />
               </div>
-<div className="grid gap-2 sm:col-span-2">
-  <Label htmlFor="service-image">
-    Service Image URL
-  </Label>
 
-  <Input
-    id="service-image"
-    type="url"
-    value={form.image}
-    onChange={(event) =>
-      updateForm("image", event.target.value)
-    }
-    placeholder="https://example.com/service-image.jpg"
-  />
+              {/* Image */}
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="service-image">
+                  Service Image URL
+                </Label>
 
-  {form.image && (
-    <div className="mt-2">
-      <img
-        src={form.image}
-        alt="Service preview"
-        className="h-32 w-full rounded-lg border object-cover"
-        onError={(event) => {
-          event.currentTarget.style.display = "none";
-        }}
-      />
-    </div>
-  )}
-</div>
+                <Input
+                  id="service-image"
+                  type="url"
+                  value={form.image}
+                  onChange={(event) =>
+                    updateForm("image", event.target.value)
+                  }
+                  placeholder="https://example.com/service-image.jpg"
+                />
+
+                {form.image && (
+                  <div className="mt-2">
+                    <img
+                      src={form.image}
+                      alt="Service preview"
+                      className="h-32 w-full rounded-lg border object-cover"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Status */}
               <div className="grid gap-2">
                 <Label htmlFor="service-status">
                   Status
@@ -648,6 +662,7 @@ const AddServices = () => {
                 </NativeSelect>
               </div>
 
+              {/* Description */}
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="service-description">
                   Description
@@ -665,6 +680,7 @@ const AddServices = () => {
               </div>
             </div>
 
+            {/* Dialog footer */}
             <DialogFooter className="mt-4">
               <Button
                 type="button"
