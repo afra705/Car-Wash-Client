@@ -17,6 +17,7 @@ import type { TService } from "@/app/types";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import BookingBtn from "./BookingBtn";
 
 type ServiceDetailsProps = {
   params: Promise<{ id: string }>;
@@ -244,15 +245,7 @@ export default async function ServiceDetailsPage({
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/signin"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "h-11 flex-1 gap-2 bg-[#FACC15] text-[#122048] hover:bg-[#eab308]"
-              )}
-            >
-              Book This Service
-            </Link>
+           <BookingBtn serviceId={String(service._id)} />
 
             <Link
               href="/services"
